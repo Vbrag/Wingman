@@ -10,10 +10,11 @@ import keyboard
 import pyperclip
 import inspect
 import time , os
- 
+import json 
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from transformers import pipeline
 import torch
+from builtins import isinstance
  
 
 coder = r"C:\Models\deepseek-coder-1.3b" # Download from https://huggingface.co/deepseek-ai/deepseek-coder-1.3b-instruct/tree/main
@@ -31,6 +32,36 @@ fix_spelling_pipeline = pipeline("text2text-generation",model= spelling)
 
 def fix_spelling(text, max_length = 256):
     return fix_spelling_pipeline("fix:"+text,max_length = max_length)
+
+
+
+def ask_coder(message):
+        # Create a list of messages to be sent to the model
+        messages=[{ 'role': 'user', 'content':   message}]
+    
+        # Apply the chat template to the messages and add a generation prompt
+        inputs = tokenizer_coder.apply_chat_template(messages, add_generation_prompt=True, return_tensors="pt").to(model_coder.device)
+    
+        # Generate responses from the model
+        outputs = model_coder.generate(inputs, max_new_tokens=1024, do_sample=True, top_k=50, top_p=0.95, num_return_sequences=1, eos_token_id=tokenizer_coder.eos_token_id)
+    
+        # Decode the output sequences
+        outputstr= str( tokenizer_coder.decode(outputs[0][len(inputs[0]):], skip_special_tokens=True) )
+        
+        
+        return outputstr
+
+def to_html(d, c = 0):
+    for a, b in d.items():
+ 
+        yield '{}<li>{}</li>'.format('   '*c, a )
+        if isinstance(b, dict):
+            yield '{}<ul>\n{}\n{}</ul>'.format('   '*c, "\n".join(to_html(b, c + 1)), '   '*c)
+    
+        else:
+            yield b
+              
+        
 
 
  
@@ -109,23 +140,8 @@ class Wingman:
         # Create a list of messages. Each message is a dictionary with 'role' and 'content' keys.
         # 'role' is the role of the user, and 'content' is the message content.
 
-        messages=[{ 'role': 'user', 'content':   self.message}]
-        
-
-        # Apply the chat template to the messages. This function is used to tokenize the messages.
-        # The 'add_generation_prompt' parameter is set to True to add a generation prompt to the messages.
-        # The 'return_tensors' parameter is set to 'pt' to return the tensors in PyTorch format.
-        
-        inputs = tokenizer_coder.apply_chat_template(messages, add_generation_prompt=True, return_tensors="pt").to(model_coder.device)
-        
-        # Generate a response from the model. The 'max_new_tokens' parameter is set to 512, which means the model will generate a response with a maximum of 512 new tokens.
-        # The 'do_sample' parameter is set to False, which means the model will not sample from the output.
-        # The 'top_k' and 'top_p' parameters are set to 50 and 0.95 respectively, which means the model will generate the top 50 tokens with the highest probability and the top 50% of the highest probability tokens.
-        # The 'num_return_sequences' parameter is set to 1, which means the model will generate a single response.
-        # The 'eos_token_id' parameter is set to the ID of the end-of-sequence token, which is used to indicate the end of a response.
-        outputs = model_coder.generate(inputs, max_new_tokens=512, do_sample=False, top_k=50, top_p=0.95, num_return_sequences=1, eos_token_id=tokenizer_coder.eos_token_id)
-        
-        outputstr= str( tokenizer_coder.decode(outputs[0][len(inputs[0]):], skip_special_tokens=True) )
+ 
+        outputstr= ask_coder(self.message)
         
         #Rewrite this code with comments describing its behavior. 
         self.Response = outputstr   # Assign the output string to self.response 
@@ -139,7 +155,7 @@ class Wingman:
 
  
     # Define the function FixSpelling
-    def FixSpelling(self , max_length = 256 ): 
+    def FixSpelling(self , max_length = 512 ): 
         """This function `FixSpelling` is designed to correct the spelling in a given message. It first gets the clipboard content, then it calls the `fix_spelling_pipeline` function with the message as an argument. The result is stored in the `response` variable. The corrected text is then extracted from the first element of the `response` and written to the keyboard."""
         # Get the clipboard content
         self.getclipboard()
@@ -167,24 +183,12 @@ class Wingman:
     
         # Get the clipboard content
         self.getclipboard()
-    
-        # Create a list of messages to be sent to the model
-        messages=[{ 'role': 'user', 'content':   self.message}]
-    
-        # Apply the chat template to the messages and add a generation prompt
-        inputs = tokenizer_coder.apply_chat_template(messages, add_generation_prompt=True, return_tensors="pt").to(model_coder.device)
-    
-        # Generate responses from the model
-        outputs = model_coder.generate(inputs, max_new_tokens=512, do_sample=False, top_k=50, top_p=0.95, num_return_sequences=1, eos_token_id=tokenizer_coder.eos_token_id)
-    
-        # Decode the output sequences
-        outputstr= str( tokenizer_coder.decode(outputs[0][len(inputs[0]):], skip_special_tokens=True) )
-    
+ 
         # Set the response
-        self.response = outputstr
+        self.response = ask_coder(self.message)
     
         # Get the response
-        response = self.response
+        response = self.response 
     
         # Write the response to the clipboard
         keyboard.write( str(response)  )
@@ -193,8 +197,96 @@ class Wingman:
         self.send2clipboard()
  
 
+    def AnalyzeFolder(self, Folder = None):
+        
+        returnDict = True
+        
+        if Folder is None:
+            returnDict = False
+            self.getclipboard()
+            Folder = self.message
+        
+        
+        print(Folder)
+        
+        
+        resDict = dict()
+        
+        filename = os.path.join(Folder,'Report.json' )
+        if os.path.isfile(filename):
+            
+            with open(filename) as json_data:
+            
+                resDict = json.load(json_data)
+            
+            
+            
+        if os.path.isdir(os.path.abspath(Folder) ) :
+        
+            #Python get a list of files and folders in directory .
+        
+            listFIlsdir  = os.listdir(Folder)
+        
+            for ele in listFIlsdir:
+        
+                fullpath = os.path.join(Folder,ele )
+        
+                res = None
+                if os.path.isdir(fullpath):
+        
+                    res = self.AnalyzeFolder(fullpath)
+        
+        
+                elif os.path.isfile(fullpath):
+                    try:
+                        pass
+        
+                        data = ""
+                        with open(fullpath, 'r') as file:
+        
+                            data = file.read()
+        
+                        if len(data) >0:
+        
+                            message = "Explain this to me. '''"+data+"'''"
+                            res = ask_coder(message)
+                            
+                            message = "format as html file. '''"+res+"'''"
+                            res = ask_coder(message)                            
+                            
+                        else:
+        
+                            res = "File is empty."
+        
+        
+                    except:
+                        res =  ele + "  is not Readable"
+        
+                resDict[ele] = res
+        if returnDict:
+            return resDict
+        
+        else:
  
- 
+            # json file to write to
+            
+            data = '\n'.join(to_html(resDict))
+            
+            filename = os.path.join(Folder,'Report.json' ) 
+            
+            with open(filename, 'w') as f:
+            
+                json.dump(resDict, f)
+            
+                print(f"Data written to {filename}")
+            #
+
+            filename = os.path.join(Folder,'Report.html' )  
+            with open(filename, 'w') as f:
+                
+                f.write(data)
+                print(f"Data written to {filename}")
+            
         
      
         
@@ -216,7 +308,7 @@ class Wingman:
         keyboard.add_hotkey('ctrl+shift+alt+V', self.PasteResponse)
         keyboard.add_hotkey('ctrl+shift+alt+S', self.FixSpelling)
         keyboard.add_hotkey('ctrl+shift+alt+N', self.Initialize)
-        
+        keyboard.add_hotkey('ctrl+shift+alt+F', self.AnalyzeFolder)        
         # Print a message indicating that the program has started
         print("Started KeyWingman.")
         
@@ -233,5 +325,7 @@ if __name__ == '__main__':
 
     # Start the interface
     Wingman.start()
+
+
  
  
