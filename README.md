@@ -38,9 +38,9 @@ Intialize
  
 # Download Models
 
-Download  from `https://huggingface.co/deepseek-ai/deepseek-coder-1.3b-instruct/tree/main` -->    `C:\Models\deepseek-coder-1.3b`
+Download  from `https://huggingface.co/deepseek-ai/deepseek-coder-1.3b-instruct/tree/main` ==>    `C:\Models\deepseek-coder-1.3b`
  
-Download  from  `https://huggingface.co/oliverguhr/spelling-correction-multilingual-base/tree/main`   -->    `C:\Models\spelling-correction-multilingual-base`  
+Download  from  `https://huggingface.co/oliverguhr/spelling-correction-multilingual-base/tree/main`   ==>    `C:\Models\spelling-correction-multilingual-base`  
 
 
 
