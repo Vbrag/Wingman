@@ -51,15 +51,15 @@ def ask_coder(message):
         
         return outputstr
 
-def to_html(d, c = 0):
+def to_html(d, c = 1):
     for a, b in d.items():
  
-        yield '{}<li>{}</li>'.format('   '*c, a )
+        yield "{}<h{}  style='color: Navy '>{}</h{}>".format('   '*(c +1),c,   a,c    )
         if isinstance(b, dict):
             yield '{}<ul>\n{}\n{}</ul>'.format('   '*c, "\n".join(to_html(b, c + 1)), '   '*c)
     
         else:
-            yield b
+            yield b.replace('\n', '<br>')
               
         
 
@@ -199,6 +199,8 @@ class Wingman:
 
     def AnalyzeFolder(self, Folder = None):
         
+        ignoreList =[".git" ,".gitattributes" , ".gitignore" , ".project" , ".pydevproject" , ".settings"  ,".vs"]
+        
         returnDict = True
         
         if Folder is None:
@@ -226,43 +228,47 @@ class Wingman:
             #Python get a list of files and folders in directory .
         
             listFIlsdir  = os.listdir(Folder)
-        
+            
+            listFIlsdir.sort()
+            
             for ele in listFIlsdir:
+                
+                if ele not in ignoreList :
         
-                fullpath = os.path.join(Folder,ele )
-        
-                res = None
-                if os.path.isdir(fullpath):
-        
-                    res = self.AnalyzeFolder(fullpath)
-        
-        
-                elif os.path.isfile(fullpath):
-                    try:
-                        pass
-        
-                        data = ""
-                        with open(fullpath, 'r') as file:
-        
-                            data = file.read()
-        
-                        if len(data) >0:
-        
-                            message = "Explain this to me. '''"+data+"'''"
-                            res = ask_coder(message)
-                            
-                            message = "format as html file. '''"+res+"'''"
-                            res = ask_coder(message)                            
-                            
-                        else:
-        
-                            res = "File is empty."
-        
-        
-                    except:
-                        res =  ele + "  is not Readable"
-        
-                resDict[ele] = res
+                    fullpath = os.path.join(Folder,ele )
+            
+                    res = None
+                    if os.path.isdir(fullpath):
+            
+                        res = self.AnalyzeFolder(fullpath)
+            
+            
+                    elif os.path.isfile(fullpath):
+                        try:
+                            pass
+            
+                            data = ""
+                            with open(fullpath, 'r') as file:
+            
+                                data = file.read()
+            
+                            if len(data) >0:
+            
+                                message = "Explain this '''"+data+"'''"
+                                res = ask_coder(message)
+                                
+                                
+                                
+     
+                            else:
+            
+                                res = "File is empty."
+            
+            
+                        except:
+                            res =  ele + "  is not Readable"
+            
+                    resDict[ele] = res
         if returnDict:
             return resDict
         
@@ -282,7 +288,7 @@ class Wingman:
             #
 
             filename = os.path.join(Folder,'Report.html' )  
-            with open(filename, 'w') as f:
+            with open(filename, 'w' , encoding="utf-8") as f:
                 
                 f.write(data)
                 print(f"Data written to {filename}")
