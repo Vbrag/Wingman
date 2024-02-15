@@ -76,7 +76,7 @@ def to_html(d, c = 1):
         
  
  
-        yield "<div data-role='collapsible'>{}<h{} id={} style='color: Navy '>{}</h{}></div>".format('   '*(c +1),c, '"'+a +'"' ,   a,c    )
+        yield "<div id={} data-role='collapsible'>{}<h{} style='color: Navy '>{}</h{}>".format('   '*(c +1),c, '"'+a +'"' ,   a,c    )
         if isinstance(b, dict):
  
             yield '{}<ul>\n{}\n{}</ul>'.format('   '*c, "\n".join(to_html(b, c + 1)), '   '*c)
@@ -85,8 +85,12 @@ def to_html(d, c = 1):
             
             for key in Keys:
                 b = b.replace(key, f'<a href="#{key}">{key}</a>')
+ 
+   
+            b = b.replace('\n', '<br>') + "</div>"
             
-            yield b.replace('\n', '<br>')
+            
+            yield b
               
         
 
@@ -246,7 +250,13 @@ def AnalyzeFolder( Folder = None):
                                             message = f"Explain this {fileType} in details , What is its purpose and what does it do?\n'''\n"+part+"''' "
                                             res = res + ask_coder(message)
                                         
-                                    print(res)        
+                                    print(res) 
+                                    
+                                    if key == ".html"     :
+                                        res = res.replace("<h", "#h")
+                                        res = res.replace(">", "#")
+                                        
+                                           
                                 
                                 else:
                                     res = "File is empty"
@@ -261,11 +271,11 @@ def AnalyzeFolder( Folder = None):
                     #     res =  ele + "  is not Readable"
                 
                 
-                if resDict.get(ele) is not None:
-                    res_old = resDict.get(ele)
-                    message = f"combine the information  in these two segments {fileType}  "+res_old+"''' \n and " + res
-                    res = ask_coder(message) 
-                    resDict[ele] = res                   
+                # if resDict.get(ele) is not None:
+                #     res_old = resDict.get(ele)
+                #     message = f"combine the information  in these two segments {fileType}  "+res_old+"''' \n and " + res
+                #     res = ask_coder(message) 
+                #     resDict[ele] = res                   
                     
                 else:            
                     resDict[ele] = res
