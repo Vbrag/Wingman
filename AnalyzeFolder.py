@@ -16,12 +16,15 @@ from transformers import pipeline
 import torch
 from builtins import isinstance
 import gc 
+ 
+os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
+
 
 coder = r"C:\Models\deepseek-coder-1.3b" # Download from https://huggingface.co/deepseek-ai/deepseek-coder-1.3b-instruct/tree/main
 #coder = r"C:\Models\Deepseek-Coder-7B-Instruct" 
 #coder = r"C:\Models\microsoft_phi2" 
 global ToAnalyzeFolder
-ToAnalyzeFolder =  r"C:\Users\abdelmaw\Documents\GitHub\Wingman" #r"C:\Users\abdelmaw\Documents\Git\hyperion-ultra\Unity" # 
+ToAnalyzeFolder =  r"C:\Users\abdelmaw\Documents\Git\hyperion-ultra\Unity" # r"C:\Users\abdelmaw\Documents\GitHub\Wingman" #
  
  
  
@@ -42,7 +45,6 @@ ignoreList =[".git" ,".gitattributes" , ".gitignore" , ".project" , ".pydevproje
 extensions =dict()
 extensions[".py"] = "Python"
 extensions[".bat"] = "Batch"
-extensions[".unity"] = "Unity"
 extensions[".cs"] = "C Sharp"
 extensions[".txt"] = "Text"
 extensions[".yaml"] = "Yaml"
@@ -50,8 +52,8 @@ extensions[".yml"] = "Yaml"
 extensions[".json"] = "Json"
 extensions[".html"] = "HTML , without including any HTML Tags in the output"
 extensions[".xml"] = "XML"
-extensions[".uxml"] = "Unity XML"
-Keys =[]
+
+KeysList =[]
 
 def ask_coder(message):
         # Create a list of messages to be sent to the model
@@ -69,6 +71,7 @@ def ask_coder(message):
         del inputs
         del outputs
         gc.collect()
+        torch.cuda.empty_cache()
         return outputstr
 
 def to_html(d, c = 1):
@@ -76,14 +79,14 @@ def to_html(d, c = 1):
         
  
  
-        yield "<div id={} data-role='collapsible'>{}<h{} style='color: Navy '>{}</h{}>".format('   '*(c +1),c, '"'+a +'"' ,   a,c    )
+        yield "{}<div id={} data-role='collapsible'><h{}  style='color: Navy '>{}</h{}>".format('   '*(c +1), '"'+a +'"' ,c,   a,c    )
         if isinstance(b, dict):
  
             yield '{}<ul>\n{}\n{}</ul>'.format('   '*c, "\n".join(to_html(b, c + 1)), '   '*c)
     
         else:
             
-            for key in Keys:
+            for key in KeysList:
                 b = b.replace(key, f'<a href="#{key}">{key}</a>')
  
    
@@ -111,6 +114,8 @@ def to_html(d, c = 1):
 def save_res(Folder , resDict):
  
     # json file to write to
+    
+    print(KeysList)
     
     data = '\n'.join(to_html(resDict))
     
@@ -174,11 +179,17 @@ def AnalyzeFolder( Folder = None):
         with open(filename) as json_data:
         
             resDict = json.load(json_data)
+
+            for ele in resDict.keys():
+                if ele not in KeysList:
+                    KeysList.append(ele) 
             
             if returnDict:
+ 
                 return resDict
             
             else:
+ 
                 save_res(Folder, resDict)
                 return
     if os.path.isdir(os.path.abspath(Folder) ) :
@@ -195,8 +206,7 @@ def AnalyzeFolder( Folder = None):
             
             if ele not in ignoreList :
                 
-                if ele not in Keys:
-                    Keys.append(ele)
+
                 
     
                 fullpath = os.path.join(Folder,ele )
@@ -252,9 +262,7 @@ def AnalyzeFolder( Folder = None):
                                         
                                     print(res) 
                                     
-                                    if key == ".html"     :
-                                        res = res.replace("<h", "#h")
-                                        res = res.replace(">", "#")
+ 
                                         
                                            
                                 
@@ -276,9 +284,11 @@ def AnalyzeFolder( Folder = None):
                 #     message = f"combine the information  in these two segments {fileType}  "+res_old+"''' \n and " + res
                 #     res = ask_coder(message) 
                 #     resDict[ele] = res                   
-                    
-                else:            
-                    resDict[ele] = res
+ 
+                if ele not in KeysList:
+                    KeysList.append(ele) 
+           
+                resDict[ele] = res
     if returnDict:
         save_res(Folder , resDict)
         return resDict
