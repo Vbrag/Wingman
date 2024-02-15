@@ -1,5 +1,5 @@
 '''
-Created on 08.02.2024
+Created on 14.02.2024
 
 @author: abdelmawla saeed Rizk
 '''
@@ -20,7 +20,13 @@ from builtins import isinstance
 coder = r"C:\Models\deepseek-coder-1.3b" # Download from https://huggingface.co/deepseek-ai/deepseek-coder-1.3b-instruct/tree/main
 #coder = r"C:\Models\Deepseek-Coder-7B-Instruct" 
 #coder = r"C:\Models\microsoft_phi2" 
-
+global ToAnalyzeFolder
+ToAnalyzeFolder =  r"C:\Users\abdelmaw\Documents\Git\hyperion-ultra\Unity" # r"C:\Users\abdelmaw\Documents\GitHub\Wingman" #
+ 
+ 
+ 
+ 
+ 
 
 tokenizer_coder = AutoTokenizer.from_pretrained(coder , trust_remote_code=True)
 model_coder = AutoModelForCausalLM.from_pretrained(coder , trust_remote_code=True, torch_dtype=torch.bfloat16).cuda()
@@ -29,9 +35,13 @@ textchars = bytearray({7,8,9,10,12,13,27} | set(range(0x20, 0x100)) - {0x7f})
 is_binary_string = lambda bytes: bool(bytes.translate(None, textchars))
  
  
-global ToAnalyzeFolder
-ToAnalyzeFolder =  r"C:\Users\abdelmaw\Documents\Git\hyperion-ultra\Unity" #r"C:\Users\abdelmaw\Documents\GitHub\Wingman" #
+
  
+global AllresDict
+AllresDict = dict()
+global i
+i = 0 
+
 ignoreList =[".git" ,".gitattributes" , ".gitignore" , ".project" , ".pydevproject" , ".settings"  ,".vs"]
 
 extensions =dict()
@@ -95,11 +105,46 @@ def to_html(d, c = 1):
 # Please note that the code is using the AutoTokenizer and AutoModelForCausalLM classes from the transformers library, which are part of the Hugging Face's transformers library. The pipeline function is a part of the transformers library, and the fix-spelling function is a custom function that uses the fix-spelling-pipeline to correct the spelling of a given text. 
 
  
+
  
+def save_res():
+    global ToAnalyzeFolder
+    global AllresDict
+    # json file to write to
+    
+    data = '\n'.join(to_html(AllresDict))
+    
+    filename = os.path.join(ToAnalyzeFolder,'CoderReport.json' ) 
+    
+    with open(filename, 'w') as f:
+    
+        json.dump(AllresDict, f)
+    
+        print(f"Data written to {filename}")
+    #
+    
+    
+    titel = ToAnalyzeFolder.split("\\")[-1] 
+    filename = os.path.join(ToAnalyzeFolder,'CoderReport.html' )  
+    with open(filename, 'w' , encoding="utf-8") as f:
+        
+        data = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+        <title>""" + titel  +"""</title>
+        </head>
+        <body> """+data+"""
+        </body>
+        </html>
+        """
+        
+        f.write(data)
+        print(f"Data written to {filename}")
  
 
 def AnalyzeFolder( Folder = None):
-    
+    global i
     
     
     returnDict = True
@@ -108,16 +153,16 @@ def AnalyzeFolder( Folder = None):
         returnDict = False
  
         global ToAnalyzeFolder
-        ToAnalyzeFolder
+        global AllresDict
+ 
 
         Folder = ToAnalyzeFolder
-    
-    
+        resDict = AllresDict
+    else:
+ 
+        resDict = dict()
+        
     print(Folder)
-    
-    
-    resDict = dict()
-    
     filename = os.path.join(Folder,'Report.json' )
     if os.path.isfile(filename):
         
@@ -126,7 +171,7 @@ def AnalyzeFolder( Folder = None):
             resDict = json.load(json_data)
         
         
-        
+      
     if os.path.isdir(os.path.abspath(Folder) ) :
     
         #Python get a list of files and folders in directory .
@@ -159,42 +204,47 @@ def AnalyzeFolder( Folder = None):
                 
                 elif os.path.isfile(fullpath):
  
-                    try:
+                    #try:
   
-                        res = None
-                        for key in extensions.keys():
-                            if key in ele:
-                                fileType = extensions.get(key)   
-                                
-                                
-                                if is_binary_string(open(fullpath, 'rb').read(1024)):
-                                    print(fullpath , "is  binary")
-                                    res = fullpath + "is  binary"
-                                    
-                                else:                         
-                                
-                                    data = ""
-                                    with open(fullpath, 'r') as file:
-                                    
-                                        data = file.read()
-                                    
-                                    if len(data) >0:
+                    res = None
+                    for key in extensions.keys():
+                        if key == ele[-len(key):]:
+                            fileType = extensions.get(key)   
                             
-                                       message = f"Explain this {fileType} in details , What is its purpose and what does it do?\n'''\n"+data+"'''\n"
-                                       res = ask_coder(message)
+                            
+                            if is_binary_string(open(fullpath, 'rb').read(1024)):
+                                print(fullpath , "is  binary")
+                                res = fullpath + "is  binary"
+                                
+                            else:                         
+                            
+                                data = ""
+                                with open(fullpath, 'r') as file:
+                                
+                                    data = file.read()
+                                
+                                if len(data) >0:
+                                    i = i+1 
+                                    message = f"Explain this {fileType} in details , What is its purpose and what does it do?\n'''\n"+data+"'''\n"
+                                    res = ask_coder(message)
                                     
-                                    
-                                    else:
-                                        res = "File is empty"
-                                    
-                                break
-                         
-                        if res is None:
-                            res =  fullpath + " is  skipped"
+                                    if i >=10:
+                                        i=0
+                                        save_res()
+                                        
+                                
+                                
+                                else:
+                                    res = "File is empty"
+                                
+                            break
+                     
+                    if res is None:
+                        res =  fullpath + " is  skipped"
  
                 
-                    except:
-                        res =  ele + "  is not Readable"
+                    # except:
+                    #     res =  ele + "  is not Readable"
                 
                 
                 if resDict.get(ele) is not None:
@@ -206,28 +256,12 @@ def AnalyzeFolder( Folder = None):
                 else:            
                     resDict[ele] = res
     if returnDict:
+        
         return resDict
     
     else:
-
-        # json file to write to
         
-        data = '\n'.join(to_html(resDict))
-        
-        filename = os.path.join(Folder,'CoderReport.json' ) 
-        
-        with open(filename, 'w') as f:
-        
-            json.dump(resDict, f)
-        
-            print(f"Data written to {filename}")
-        #
-
-        filename = os.path.join(Folder,'CoderReport.html' )  
-        with open(filename, 'w' , encoding="utf-8") as f:
-            
-            f.write(data)
-            print(f"Data written to {filename}")
+        save_res()
             
         
      
