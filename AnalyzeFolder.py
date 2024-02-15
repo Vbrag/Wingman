@@ -15,13 +15,13 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from transformers import pipeline
 import torch
 from builtins import isinstance
- 
+import gc 
 
 coder = r"C:\Models\deepseek-coder-1.3b" # Download from https://huggingface.co/deepseek-ai/deepseek-coder-1.3b-instruct/tree/main
 #coder = r"C:\Models\Deepseek-Coder-7B-Instruct" 
 #coder = r"C:\Models\microsoft_phi2" 
 global ToAnalyzeFolder
-ToAnalyzeFolder =  r"C:\Users\abdelmaw\Documents\Git\hyperion-ultra\Unity" # r"C:\Users\abdelmaw\Documents\GitHub\Wingman" #
+ToAnalyzeFolder =  r"C:\Users\abdelmaw\Documents\GitHub\Wingman" #r"C:\Users\abdelmaw\Documents\Git\hyperion-ultra\Unity" # 
  
  
  
@@ -35,12 +35,7 @@ textchars = bytearray({7,8,9,10,12,13,27} | set(range(0x20, 0x100)) - {0x7f})
 is_binary_string = lambda bytes: bool(bytes.translate(None, textchars))
  
  
-
  
-global AllresDict
-AllresDict = dict()
-global i
-i = 0 
 
 ignoreList =[".git" ,".gitattributes" , ".gitignore" , ".project" , ".pydevproject" , ".settings"  ,".vs"]
 
@@ -54,8 +49,8 @@ extensions[".yaml"] = "Yaml"
 extensions[".yml"] = "Yaml"
 extensions[".json"] = "Json"
 extensions[".html"] = "HTML , without including any HTML Tags in the output"
-
-
+extensions[".xml"] = "XML"
+extensions[".uxml"] = "Unity XML"
 Keys =[]
 
 def ask_coder(message):
@@ -71,7 +66,9 @@ def ask_coder(message):
         # Decode the output sequences
         outputstr= str( tokenizer_coder.decode(outputs[0][len(inputs[0]):], skip_special_tokens=True) )
         
-        
+        del inputs
+        del outputs
+        gc.collect()
         return outputstr
 
 def to_html(d, c = 1):
@@ -79,7 +76,7 @@ def to_html(d, c = 1):
         
  
  
-        yield "{}<h{} id={} style='color: Navy '>{}</h{}>".format('   '*(c +1),c, '"'+a +'"' ,   a,c    )
+        yield "<div data-role='collapsible'>{}<h{} id={} style='color: Navy '>{}</h{}></div>".format('   '*(c +1),c, '"'+a +'"' ,   a,c    )
         if isinstance(b, dict):
  
             yield '{}<ul>\n{}\n{}</ul>'.format('   '*c, "\n".join(to_html(b, c + 1)), '   '*c)
@@ -107,34 +104,38 @@ def to_html(d, c = 1):
  
 
  
-def save_res():
-    global ToAnalyzeFolder
-    global AllresDict
+def save_res(Folder , resDict):
+ 
     # json file to write to
     
-    data = '\n'.join(to_html(AllresDict))
+    data = '\n'.join(to_html(resDict))
     
-    filename = os.path.join(ToAnalyzeFolder,'CoderReport.json' ) 
+    filename = os.path.join( Folder,'CoderReport.json' ) 
     
     with open(filename, 'w') as f:
     
-        json.dump(AllresDict, f)
+        json.dump(resDict, f)
     
         print(f"Data written to {filename}")
     #
     
     
-    titel = ToAnalyzeFolder.split("\\")[-1] 
-    filename = os.path.join(ToAnalyzeFolder,'CoderReport.html' )  
+    titel = Folder.split("\\")[-1] 
+    filename = os.path.join(Folder,'CoderReport.html' )  
     with open(filename, 'w' , encoding="utf-8") as f:
         
         data = """
         <!DOCTYPE html>
         <html>
         <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css">
+        <script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+        <script src="https://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
         <title>""" + titel  +"""</title>
         </head>
-        <body> """+data+"""
+        <body> <div data-role="main" class="ui-content">"""+data+"""
+        </div>
         </body>
         </html>
         """
@@ -145,7 +146,7 @@ def save_res():
 
 def AnalyzeFolder( Folder = None):
     global i
-    
+ 
     
     returnDict = True
     
@@ -153,25 +154,29 @@ def AnalyzeFolder( Folder = None):
         returnDict = False
  
         global ToAnalyzeFolder
-        global AllresDict
  
-
         Folder = ToAnalyzeFolder
-        resDict = AllresDict
-    else:
  
-        resDict = dict()
+ 
+ 
+    resDict = dict()
+        
+ 
         
     print(Folder)
-    filename = os.path.join(Folder,'Report.json' )
+    filename = os.path.join(Folder,'CoderReport.json' )
     if os.path.isfile(filename):
         
         with open(filename) as json_data:
         
             resDict = json.load(json_data)
-        
-        
-      
+            
+            if returnDict:
+                return resDict
+            
+            else:
+                save_res(Folder, resDict)
+                return
     if os.path.isdir(os.path.abspath(Folder) ) :
     
         #Python get a list of files and folders in directory .
@@ -224,15 +229,24 @@ def AnalyzeFolder( Folder = None):
                                     data = file.read()
                                 
                                 if len(data) >0:
-                                    i = i+1 
-                                    message = f"Explain this {fileType} in details , What is its purpose and what does it do?\n'''\n"+data+"'''\n"
-                                    res = ask_coder(message)
                                     
-                                    if i >=10:
-                                        i=0
-                                        save_res()
+                                    
+                                    if len(data)  <= 25*1024:
+                                    
+ 
+                                        message = f"Explain this {fileType} in details , What is its purpose and what does it do?\n'''\n"+data+"''' "
+                                        res = ask_coder(message)
+                                    
+                                    else:
                                         
-                                
+                                        res= ""
+                                        for i in range(0 ,len(data), 25*1024 ):
+                                            part = data[i:i+25*1024]
+                                    
+                                            message = f"Explain this {fileType} in details , What is its purpose and what does it do?\n'''\n"+part+"''' "
+                                            res = res + ask_coder(message)
+                                        
+                                    print(res)        
                                 
                                 else:
                                     res = "File is empty"
@@ -256,12 +270,12 @@ def AnalyzeFolder( Folder = None):
                 else:            
                     resDict[ele] = res
     if returnDict:
-        
+        save_res(Folder , resDict)
         return resDict
     
     else:
         
-        save_res()
+        save_res(Folder , resDict)
             
         
      
