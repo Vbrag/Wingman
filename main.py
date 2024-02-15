@@ -24,8 +24,8 @@ spelling = r"C:\Models\spelling-correction-multilingual-base" # Download https:/
 tokenizer_coder = AutoTokenizer.from_pretrained(coder , trust_remote_code=True)
 model_coder = AutoModelForCausalLM.from_pretrained(coder , trust_remote_code=True, torch_dtype=torch.bfloat16).cuda()
 
- 
- 
+textchars = bytearray({7,8,9,10,12,13,27} | set(range(0x20, 0x100)) - {0x7f}) 
+is_binary_string = lambda bytes: bool(bytes.translate(None, textchars)) 
 
 fix_spelling_pipeline = pipeline("text2text-generation",model= spelling)
 
@@ -51,18 +51,7 @@ def ask_coder(message):
         
         return outputstr
 
-def to_html(d, c = 1):
-    for a, b in d.items():
  
-        yield "{}<h{}  style='color: Navy '>{}</h{}>".format('   '*(c +1),c,   a,c    )
-        if isinstance(b, dict):
-            yield '{}<ul>\n{}\n{}</ul>'.format('   '*c, "\n".join(to_html(b, c + 1)), '   '*c)
-    
-        else:
-            yield b.replace('\n', '<br>')
-              
-        
-
 
  
 # This code is a Python script that uses the Hugging Face's transformers library to load a pre-trained model for text generation and a spelling correction model. The AutoTokenizer and AutoModelForCausalLM classes are used to load the models. The pipeline function is used to create a text-to-text generation pipeline. The fix-spelling function is used to correct the spelling of a given text.
@@ -196,104 +185,7 @@ class Wingman:
         # Send the response to the clipboard
         self.send2clipboard()
  
-
-    def AnalyzeFolder(self, Folder = None):
-        
-        ignoreList =[".git" ,".gitattributes" , ".gitignore" , ".project" , ".pydevproject" , ".settings"  ,".vs"]
-        
-        returnDict = True
-        
-        if Folder is None:
-            returnDict = False
-            self.getclipboard()
-            Folder = self.message
-        
-        
-        print(Folder)
-        
-        
-        resDict = dict()
-        
-        filename = os.path.join(Folder,'Report.json' )
-        if os.path.isfile(filename):
-            
-            with open(filename) as json_data:
-            
-                resDict = json.load(json_data)
-            
-            
-            
-        if os.path.isdir(os.path.abspath(Folder) ) :
-        
-            #Python get a list of files and folders in directory .
-        
-            listFIlsdir  = os.listdir(Folder)
-            
-            listFIlsdir.sort()
-            
-            for ele in listFIlsdir:
-                
-                if ele not in ignoreList :
-        
-                    fullpath = os.path.join(Folder,ele )
-            
-                    res = None
-                    if os.path.isdir(fullpath):
-            
-                        res = self.AnalyzeFolder(fullpath)
-            
-            
-                    elif os.path.isfile(fullpath):
-                        try:
-                            pass
-            
-                            data = ""
-                            with open(fullpath, 'r') as file:
-            
-                                data = file.read()
-            
-                            if len(data) >0:
-            
-                                message = "Explain this '''"+data+"'''"
-                                res = ask_coder(message)
-                                
-                                
-                                
-     
-                            else:
-            
-                                res = "File is empty."
-            
-            
-                        except:
-                            res =  ele + "  is not Readable"
-            
-                    resDict[ele] = res
-        if returnDict:
-            return resDict
-        
-        else:
  
-            # json file to write to
-            
-            data = '\n'.join(to_html(resDict))
-            
-            filename = os.path.join(Folder,'Report.json' ) 
-            
-            with open(filename, 'w') as f:
-            
-                json.dump(resDict, f)
-            
-                print(f"Data written to {filename}")
-            #
-
-            filename = os.path.join(Folder,'Report.html' )  
-            with open(filename, 'w' , encoding="utf-8") as f:
-                
-                f.write(data)
-                print(f"Data written to {filename}")
-            
-        
      
         
     def start(self):
@@ -314,7 +206,7 @@ class Wingman:
         keyboard.add_hotkey('ctrl+shift+alt+V', self.PasteResponse)
         keyboard.add_hotkey('ctrl+shift+alt+S', self.FixSpelling)
         keyboard.add_hotkey('ctrl+shift+alt+N', self.Initialize)
-        keyboard.add_hotkey('ctrl+shift+alt+F', self.AnalyzeFolder)        
+         
         # Print a message indicating that the program has started
         print("Started KeyWingman.")
         
