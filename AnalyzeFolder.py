@@ -24,7 +24,7 @@ coder = r"C:\Models\deepseek-coder-1.3b" # Download from https://huggingface.co/
 #coder = r"C:\Models\Deepseek-Coder-7B-Instruct" 
 #coder = r"C:\Models\microsoft_phi2" 
 global ToAnalyzeFolder
-ToAnalyzeFolder =  r"C:\Users\abdelmaw\Documents\Git\hyperion-ultra\Unity" # r"C:\Users\abdelmaw\Documents\GitHub\Wingman" #
+ToAnalyzeFolder =  r"C:\Users\abdelmaw\Documents\GitHub\Wingman" #r"C:\Users\abdelmaw\Documents\GitHub\ATMOS-Scenery-Generator" #r"C:\Users\abdelmaw\Documents\Git\hyperion-ultra\Unity" vv
  
  
  
@@ -40,7 +40,7 @@ is_binary_string = lambda bytes: bool(bytes.translate(None, textchars))
  
  
 
-ignoreList =[".git" ,".gitattributes" , ".gitignore" , ".project" , ".pydevproject" , ".settings"  ,".vs"]
+ignoreList =[".git" ,".gitattributes" , ".gitignore" , "ignore", ".project" , ".pydevproject" , ".settings"  ,".vs" ,"__pycache__"]
 
 extensions =dict()
 extensions[".py"] = "Python"
@@ -74,23 +74,108 @@ def ask_coder(message):
         torch.cuda.empty_cache()
         return outputstr
 
+
+translationDict = dict()
+
+translationDict["'''"] = ["<code>" , "</code>" ]
+translationDict["**"]  = ["<strong>" , "</strong>" ]
+#translationDict["'"]  = ["<em>" , "</em>" ]
+translationDict["`"]  = ["<em>" , "</em>"]
+
 def to_html(d, c = 1):
-    for a, b in d.items():
+    
+    
+    
+ 
+    folders = []
+    files = []    
+    
+    dkeys = list(d.keys())
+    
+    for ele in dkeys:
         
+        b  = d.get(ele)
+        
+        if isinstance(b, str):
+            files.append(ele)
+            
+        else:
+            folders.append(ele)
+            
+ 
+    folders.sort()        
+    files.sort()     
+    
+    
+    dkeysmew = folders + files
+    
+    for a in dkeysmew:
+        
+        b  = d.get(a)
+        
+        if isinstance(b, str):
  
  
-        yield "{}<div id={} data-role='collapsible'><h{}  style='color: Navy '>{}</h{}>".format('   '*(c +1), '"'+a +'"' ,c,   a,c    )
+            yield "{}<button id={} class='collapsible'>{}</button>  ".format('   '*(c +1),  '"'+a +'"'  , a    )
+            
+        else:
+            yield "{}<h{} id={} style='background-color: #777;color: white;cursor: pointer;padding: 18px;width: 100%;border: none;text-align: left;outline: none;font-size: 15px;'>{}</h{}>".format('   '*(c +1) ,c, '"'+a +'"',   a,c    )            
+            
         if isinstance(b, dict):
  
             yield '{}<ul>\n{}\n{}</ul>'.format('   '*c, "\n".join(to_html(b, c + 1)), '   '*c)
     
         else:
             
+            
+            
             for key in KeysList:
-                b = b.replace(key, f'<a href="#{key}">{key}</a>')
+                
  
-   
-            b = b.replace('\n', '<br>') + "</div>"
+                
+                b = b.replace(" "+key + " ", f' <a href="#{key}">{key}</a> ' )
+                b = b.replace(" "+key + "'", f' <a href="#{key}">{key}</a>'+"'" )
+                b = b.replace("'"+key + " ", "'"+f'<a href="#{key}">{key}</a> ' )  
+                b = b.replace("'"+key + "'", "'"+f'<a href="#{key}">{key}</a>'+"'" ) 
+                                
+                b = b.replace(" "+key + '"', f' <a href="#{key}">{key}</a>'+'"' )
+                b = b.replace('"'+key + " ", '"'+f'<a href="#{key}">{key}</a> ' )  
+                b = b.replace('"'+key + '"', '"'+f'<a href="#{key}">{key}</a>'+'"')
+ 
+                b = b.replace(" "+key + '`', f' <a href="#{key}">{key}</a>'+'`' )
+                b = b.replace('`'+key + " ", '`'+f'<a href="#{key}">{key}</a> ' )  
+                b = b.replace('`'+key + '`', '`'+f'<a href="#{key}">{key}</a>'+'`')
+                
+                
+                
+            for key in translationDict.keys():
+                
+                start = True
+                if key in b:
+                    while key in b :
+                        index = b.find(key)
+                        if start:
+                            b = b[0:index] + translationDict.get(key)[0] + b[index+len(key):]
+                            start = False
+                        else:
+                            b = b[0:index] + translationDict.get(key)[1] + b[index+len(key):]                            
+                            start = True
+                    
+                    
+            
+            
+            
+                
+                                 
+            b = '<div class="content">'+b.replace('\n', '<br>') + "</div>"
+            
+            
+            
+            
+            
+            
+            
+            
             
             
             yield b
@@ -115,9 +200,11 @@ def save_res(Folder , resDict):
  
     # json file to write to
     
-    print(KeysList)
+ 
+    KeysList.sort(key=len)
+    KeysList.reverse()
+ 
     
-    data = '\n'.join(to_html(resDict))
     
     filename = os.path.join( Folder,'CoderReport.json' ) 
     
@@ -127,9 +214,14 @@ def save_res(Folder , resDict):
     
         print(f"Data written to {filename}")
     #
+    data = '\n'.join(to_html(resDict))
+    
     
     
     titel = Folder.split("\\")[-1] 
+    
+    data = data.replace(ToAnalyzeFolder , titel)
+    
     filename = os.path.join(Folder,'CoderReport.html' )  
     with open(filename, 'w' , encoding="utf-8") as f:
         
@@ -138,13 +230,51 @@ def save_res(Folder , resDict):
         <html>
         <head>
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link rel="stylesheet" href="https://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css">
-        <script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
-        <script src="https://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
+        <style>
+        .collapsible {
+          background-color: #777;
+          color: white;
+          cursor: pointer;
+          padding: 18px;
+          width: 100%;
+          border: none;
+          text-align: left;
+          outline: none;
+          font-size: 15px;
+        }
+        
+        .active, .collapsible:hover {
+          background-color: #555;
+        }
+        
+        .content {
+          padding: 0 18px;
+          max-height: 0;
+          overflow: hidden;
+          transition: max-height 0.2s ease-out;
+          background-color: #f1f1f1;
+        }
+        </style> 
         <title>""" + titel  +"""</title>
         </head>
-        <body> <div data-role="main" class="ui-content">"""+data+"""
-        </div>
+        <body>  """+data+"""
+        <script>
+        var coll = document.getElementsByClassName("collapsible");
+        var i;
+        
+        for (i = 0; i < coll.length; i++) {
+          coll[i].addEventListener("click", function() {
+            this.classList.toggle("active");
+            var content = this.nextElementSibling;
+            if (content.style.maxHeight){
+              content.style.maxHeight = null;
+            } else {
+              content.style.maxHeight = content.scrollHeight + "px";
+            } 
+          });
+        }
+        </script>
+        
         </body>
         </html>
         """
@@ -238,7 +368,7 @@ def AnalyzeFolder( Folder = None):
                             else:                         
                             
                                 data = ""
-                                with open(fullpath, 'r') as file:
+                                with open(fullpath, 'r' , encoding="utf8") as file:
                                 
                                     data = file.read()
                                 
@@ -267,12 +397,19 @@ def AnalyzeFolder( Folder = None):
                                            
                                 
                                 else:
-                                    res = "File is empty"
+                                    
+                                    message = f"what this {fileType} with file name {ele} ,  say about the file"
+                                    res = ask_coder(message)
+                                    
+                                    res = f"File is empty but this {fileType} with file name {ele}" +  res
                                 
                             break
                      
                     if res is None:
-                        res =  fullpath + " is  skipped"
+                        message = f"what this  file name {ele} ,  say about the file? and what is this file for?"
+                        res = ask_coder(message)
+                        
+                        res =  fullpath + " is  skipped  but " + res
  
                 
                     # except:
