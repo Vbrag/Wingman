@@ -24,8 +24,7 @@ coder = r"C:\Models\deepseek-coder-1.3b" # Download from https://huggingface.co/
 #coder = r"C:\Models\Deepseek-Coder-7B-Instruct" 
 #coder = r"C:\Models\microsoft_phi2" 
 global ToAnalyzeFolder
-ToAnalyzeFolder =  r"C:\Users\abdelmaw\Documents\GitHub\Wingman" #r"C:\Users\abdelmaw\Documents\GitHub\ATMOS-Scenery-Generator" #r"C:\Users\abdelmaw\Documents\Git\hyperion-ultra\Unity" vv
- 
+ToAnalyzeFolder = r"C:\Users\abdelmaw\Documents\Git\hyperion-ultra\Unity" # r"C:\Users\abdelmaw\Documents\GitHub\Wingman" #r"C:\Users\abdelmaw\Documents\GitHub\ATMOS-Scenery-Generator" #  
  
  
  
@@ -397,19 +396,19 @@ def AnalyzeFolder( Folder = None):
                                            
                                 
                                 else:
+                                    #
+                                    # message = f"what this {fileType} with file name {ele} ,  say about the file"
+                                    # res = ask_coder(message)
                                     
-                                    message = f"what this {fileType} with file name {ele} ,  say about the file"
-                                    res = ask_coder(message)
-                                    
-                                    res = f"File is empty but this {fileType} with file name {ele}" +  res
+                                    res = f"File is empty  "  
                                 
                             break
                      
                     if res is None:
-                        message = f"what this  file name {ele} ,  say about the file? and what is this file for?"
-                        res = ask_coder(message)
+                        # message = f"what this  file name {ele} ,  say about the file? and what is this file for?"
+                        # res = ask_coder(message)
                         
-                        res =  fullpath + " is  skipped  but " + res
+                        res =  fullpath + " is  skipped    "  
  
                 
                     # except:
