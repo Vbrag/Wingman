@@ -24,7 +24,7 @@ coder = r"C:\Models\deepseek-coder-1.3b" # Download from https://huggingface.co/
 #coder = r"C:\Models\Deepseek-Coder-7B-Instruct" 
 #coder = r"C:\Models\microsoft_phi2" 
 global ToAnalyzeFolder
-ToAnalyzeFolder = r"C:\Users\abdelmaw\Documents\Git\hyperion-ultra\Unity" # r"C:\Users\abdelmaw\Documents\GitHub\Wingman" #r"C:\Users\abdelmaw\Documents\GitHub\ATMOS-Scenery-Generator" #  
+ToAnalyzeFolder = r"C:\Users\abdelmaw\Documents\Git\hyperion-ultra\Unity"# r"C:\Users\abdelmaw\Documents\GitHub\Wingman"# # r"C:\Users\abdelmaw\Documents\GitHub\Wingman" #r"C:\Users\abdelmaw\Documents\GitHub\ATMOS-Scenery-Generator" #  
  
  
  
@@ -82,9 +82,7 @@ translationDict["**"]  = ["<strong>" , "</strong>" ]
 translationDict["`"]  = ["<em>" , "</em>"]
 
 def to_html(d, c = 1):
-    
-    
-    
+ 
  
     folders = []
     files = []    
@@ -95,12 +93,13 @@ def to_html(d, c = 1):
         
         b  = d.get(ele)
         
-        if isinstance(b, str):
+        if isinstance(b, str) and not "skipped" in b: 
             files.append(ele)
             
-        else:
+        elif  isinstance(b, dict):
             folders.append(ele)
-            
+        else:
+            print("skipped")
  
     folders.sort()        
     files.sort()     
@@ -112,73 +111,71 @@ def to_html(d, c = 1):
         
         b  = d.get(a)
         
-        if isinstance(b, str):
- 
- 
-            yield "{}<button id={} class='collapsible'>{}</button>  ".format('   '*(c +1),  '"'+a +'"'  , a    )
-            
+        if isinstance(b, str)  and "skipped" in b:
+            print("skipped")
+            return ""
+        
+        
         else:
-            yield "{}<h{} id={} style='background-color: #777;color: white;cursor: pointer;padding: 18px;width: 100%;border: none;text-align: left;outline: none;font-size: 15px;'>{}</h{}>".format('   '*(c +1) ,c, '"'+a +'"',   a,c    )            
-            
-        if isinstance(b, dict):
- 
-            yield '{}<ul>\n{}\n{}</ul>'.format('   '*c, "\n".join(to_html(b, c + 1)), '   '*c)
-    
-        else:
-            
-            
-            
-            for key in KeysList:
+            if isinstance(b, str) :
+     
+     
+                yield "{}<button id={} class='collapsible'>{}</button>  ".format('   '*(c +1),  '"'+a +'"'  , a    )
                 
- 
+            else:
+                yield "{}<h{} id={} style='background-color: #777;color: white;cursor: pointer;padding: 18px;width: 100%;border: none;text-align: left;outline: none;font-size: 15px;'>{}</h{}>".format('   '*(c +1) ,c, '"'+a +'"',   a,c    )            
                 
-                b = b.replace(" "+key + " ", f' <a href="#{key}">{key}</a> ' )
-                b = b.replace(" "+key + "'", f' <a href="#{key}">{key}</a>'+"'" )
-                b = b.replace("'"+key + " ", "'"+f'<a href="#{key}">{key}</a> ' )  
-                b = b.replace("'"+key + "'", "'"+f'<a href="#{key}">{key}</a>'+"'" ) 
-                                
-                b = b.replace(" "+key + '"', f' <a href="#{key}">{key}</a>'+'"' )
-                b = b.replace('"'+key + " ", '"'+f'<a href="#{key}">{key}</a> ' )  
-                b = b.replace('"'+key + '"', '"'+f'<a href="#{key}">{key}</a>'+'"')
- 
-                b = b.replace(" "+key + '`', f' <a href="#{key}">{key}</a>'+'`' )
-                b = b.replace('`'+key + " ", '`'+f'<a href="#{key}">{key}</a> ' )  
-                b = b.replace('`'+key + '`', '`'+f'<a href="#{key}">{key}</a>'+'`')
+            if isinstance(b, dict):
+     
+                yield '{}<ul>\n{}\n{}</ul>'.format('   '*c, "\n".join(to_html(b, c + 1)), '   '*c)
+        
+            else:
                 
-                
-                
-            for key in translationDict.keys():
-                
-                start = True
-                if key in b:
-                    while key in b :
-                        index = b.find(key)
-                        if start:
-                            b = b[0:index] + translationDict.get(key)[0] + b[index+len(key):]
-                            start = False
-                        else:
-                            b = b[0:index] + translationDict.get(key)[1] + b[index+len(key):]                            
-                            start = True
+                b =  b.replace('<', '(')    
+                b =  b.replace('>', ')')  
+                for key in KeysList:
+                    
+     
+                    
+                    b = b.replace(" "+key + " ", f' <a href="#{key}">{key}</a> ' )
+                    b = b.replace(" "+key + "'", f' <a href="#{key}">{key}</a>'+"'" )
+                    b = b.replace("'"+key + " ", "'"+f'<a href="#{key}">{key}</a> ' )  
+                    b = b.replace("'"+key + "'", "'"+f'<a href="#{key}">{key}</a>'+"'" ) 
+                                    
+                    b = b.replace(" "+key + '"', f' <a href="#{key}">{key}</a>'+'"' )
+                    b = b.replace('"'+key + " ", '"'+f'<a href="#{key}">{key}</a> ' )  
+                    b = b.replace('"'+key + '"', '"'+f'<a href="#{key}">{key}</a>'+'"')
+     
+                    b = b.replace(" "+key + '`', f' <a href="#{key}">{key}</a>'+'`' )
+                    b = b.replace('`'+key + " ", '`'+f'<a href="#{key}">{key}</a> ' )  
+                    b = b.replace('`'+key + '`', '`'+f'<a href="#{key}">{key}</a>'+'`')
                     
                     
-            
-            
-            
+                    
+                for key in translationDict.keys():
+                    
+                    start = True
+                    if key in b:
+                        while key in b :
+                            index = b.find(key)
+                            if start:
+                                b = b[0:index] + translationDict.get(key)[0] + b[index+len(key):]
+                                start = False
+                            else:
+                                b = b[0:index] + translationDict.get(key)[1] + b[index+len(key):]                            
+                                start = True
+                        
+                        
                 
-                                 
-            b = '<div class="content">'+b.replace('\n', '<br>') + "</div>"
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            yield b
-              
+                
+                
+                    
+                                     
+                b = '<div class="content">'+b.replace('\n', '<br>') + "</div>"
+ 
+                
+                yield b
+                  
         
 
 
@@ -194,6 +191,39 @@ def to_html(d, c = 1):
 
  
 
+
+def organizeDict(d):
+    
+    newDict = dict()
+ 
+    dkeys = list(d.keys())
+ 
+    for a in dkeys:
+        
+        b  = d.get(a)
+        
+        if isinstance(b, str)  and "skipped" in b:
+            print("skipped")
+ 
+        
+        
+        else:
+            if isinstance(b, str) :
+                
+                newDict[a] = b
+     
+ 
+            elif isinstance(b, dict):
+                
+                b = organizeDict(b)
+     
+                if len(b.keys()) > 0:
+                    newDict[a] = b
+                            
+ 
+    return newDict 
+    
+    
  
 def save_res(Folder , resDict):
  
@@ -213,6 +243,10 @@ def save_res(Folder , resDict):
     
         print(f"Data written to {filename}")
     #
+    
+    
+    resDict = organizeDict(resDict)
+    
     data = '\n'.join(to_html(resDict))
     
     
@@ -273,7 +307,10 @@ def save_res(Folder , resDict):
           });
         }
         </script>
-        
+        <footer>
+          <p>Author: deepseek-coder-1.3b<br>
+          <a href="https://huggingface.co/deepseek-ai/deepseek-coder-1.3b-instruct/tree/main">deepseek-coder</a></p>
+        </footer>        
         </body>
         </html>
         """
