@@ -24,10 +24,10 @@ coder = r"C:\Models\deepseek-coder-1.3b" # Download from https://huggingface.co/
 #coder = r"C:\Models\Deepseek-Coder-7B-Instruct" 
 #coder = r"C:\Models\microsoft_phi2" 
 global ToAnalyzeFolder
-ToAnalyzeFolder = r"C:\Users\abdelmaw\Documents\Git\hyperion-ultra\Unity"# r"C:\Users\abdelmaw\Documents\GitHub\Wingman"# # r"C:\Users\abdelmaw\Documents\GitHub\Wingman" #r"C:\Users\abdelmaw\Documents\GitHub\ATMOS-Scenery-Generator" #  
+ToAnalyzeFolder = r"C:\Users\abdelmaw\Documents\Git\hyperion-ultra\Unity"#  r"C:\Users\abdelmaw\Documents\GitHub\Wingman"#  # r"C:\Users\abdelmaw\Documents\GitHub\Wingman" #r"C:\Users\abdelmaw\Documents\GitHub\ATMOS-Scenery-Generator" #  
  
- 
- 
+global KeysList 
+KeysList =[] 
  
 
 tokenizer_coder = AutoTokenizer.from_pretrained(coder , trust_remote_code=True)
@@ -52,7 +52,7 @@ extensions[".json"] = "Json"
 extensions[".html"] = "HTML , without including any HTML Tags in the output"
 extensions[".xml"] = "XML"
 
-KeysList =[]
+
 
 def ask_coder(message):
         # Create a list of messages to be sent to the model
@@ -83,7 +83,7 @@ translationDict["`"]  = ["<em>" , "</em>"]
 
 def to_html(d, c = 1):
  
- 
+    global KeysList 
     folders = []
     files = []    
     
@@ -93,13 +93,12 @@ def to_html(d, c = 1):
         
         b  = d.get(ele)
         
-        if isinstance(b, str) and not "skipped" in b: 
+        if isinstance(b, str)  : 
             files.append(ele)
             
         elif  isinstance(b, dict):
             folders.append(ele)
-        else:
-            print("skipped")
+ 
  
     folders.sort()        
     files.sort()     
@@ -110,71 +109,65 @@ def to_html(d, c = 1):
     for a in dkeysmew:
         
         b  = d.get(a)
+ 
+        if isinstance(b, str) :
         
-        if isinstance(b, str)  and "skipped" in b:
-            print("skipped")
-            return ""
         
+            yield "{}<button id={} class='collapsible'>{}</button>  ".format('   '*(c +1),  '"'+a +'"'  , a    )
+            
+        else:
+            yield "{}<h{} id={} style='background-color: #777;color: white;cursor: pointer;padding: 18px;width: 100%;border: none;text-align: left;outline: none;font-size: 15px;'>{}</h{}>".format('   '*(c +1) ,c, '"'+a +'"',   a,c    )            
+            
+        if isinstance(b, dict):
+        
+            yield '{}<ul>\n{}\n{}</ul>'.format('   '*c, "\n".join(to_html(b, c + 1)), '   '*c)
         
         else:
-            if isinstance(b, str) :
-     
-     
-                yield "{}<button id={} class='collapsible'>{}</button>  ".format('   '*(c +1),  '"'+a +'"'  , a    )
+            
+            b =  b.replace('<', '&lt')    
+            b =  b.replace('>', '&gt')  
+            for key in KeysList:
                 
-            else:
-                yield "{}<h{} id={} style='background-color: #777;color: white;cursor: pointer;padding: 18px;width: 100%;border: none;text-align: left;outline: none;font-size: 15px;'>{}</h{}>".format('   '*(c +1) ,c, '"'+a +'"',   a,c    )            
-                
-            if isinstance(b, dict):
-     
-                yield '{}<ul>\n{}\n{}</ul>'.format('   '*c, "\n".join(to_html(b, c + 1)), '   '*c)
         
-            else:
                 
-                b =  b.replace('<', '(')    
-                b =  b.replace('>', ')')  
-                for key in KeysList:
-                    
-     
-                    
-                    b = b.replace(" "+key + " ", f' <a href="#{key}">{key}</a> ' )
-                    b = b.replace(" "+key + "'", f' <a href="#{key}">{key}</a>'+"'" )
-                    b = b.replace("'"+key + " ", "'"+f'<a href="#{key}">{key}</a> ' )  
-                    b = b.replace("'"+key + "'", "'"+f'<a href="#{key}">{key}</a>'+"'" ) 
-                                    
-                    b = b.replace(" "+key + '"', f' <a href="#{key}">{key}</a>'+'"' )
-                    b = b.replace('"'+key + " ", '"'+f'<a href="#{key}">{key}</a> ' )  
-                    b = b.replace('"'+key + '"', '"'+f'<a href="#{key}">{key}</a>'+'"')
-     
-                    b = b.replace(" "+key + '`', f' <a href="#{key}">{key}</a>'+'`' )
-                    b = b.replace('`'+key + " ", '`'+f'<a href="#{key}">{key}</a> ' )  
-                    b = b.replace('`'+key + '`', '`'+f'<a href="#{key}">{key}</a>'+'`')
-                    
-                    
-                    
-                for key in translationDict.keys():
-                    
-                    start = True
-                    if key in b:
-                        while key in b :
-                            index = b.find(key)
-                            if start:
-                                b = b[0:index] + translationDict.get(key)[0] + b[index+len(key):]
-                                start = False
-                            else:
-                                b = b[0:index] + translationDict.get(key)[1] + b[index+len(key):]                            
-                                start = True
-                        
-                        
+                b = b.replace(" "+key + " ", f' <a href="#{key}">{key}</a> ' )
+                b = b.replace(" "+key + "'", f' <a href="#{key}">{key}</a>'+"'" )
+                b = b.replace("'"+key + " ", "'"+f'<a href="#{key}">{key}</a> ' )  
+                b = b.replace("'"+key + "'", "'"+f'<a href="#{key}">{key}</a>'+"'" ) 
+                                
+                b = b.replace(" "+key + '"', f' <a href="#{key}">{key}</a>'+'"' )
+                b = b.replace('"'+key + " ", '"'+f'<a href="#{key}">{key}</a> ' )  
+                b = b.replace('"'+key + '"', '"'+f'<a href="#{key}">{key}</a>'+'"')
+        
+                b = b.replace(" "+key + '`', f' <a href="#{key}">{key}</a>'+'`' )
+                b = b.replace('`'+key + " ", '`'+f'<a href="#{key}">{key}</a> ' )  
+                b = b.replace('`'+key + '`', '`'+f'<a href="#{key}">{key}</a>'+'`')
                 
                 
                 
-                    
-                                     
-                b = '<div class="content">'+b.replace('\n', '<br>') + "</div>"
- 
+            for key in translationDict.keys():
                 
-                yield b
+                start = True
+                if key in b:
+                    while key in b :
+                        index = b.find(key)
+                        if start:
+                            b = b[0:index] + translationDict.get(key)[0] + b[index+len(key):]
+                            start = False
+                        else:
+                            b = b[0:index] + translationDict.get(key)[1] + b[index+len(key):]                            
+                            start = True
+                    
+                    
+            
+            
+            
+                
+                                 
+            b = '<div class="content">'+b.replace('\n', '<br>') + "</div>"
+        
+            
+            yield b
                   
         
 
@@ -193,20 +186,21 @@ def to_html(d, c = 1):
 
 
 def organizeDict(d):
-    
+    global KeysList 
     newDict = dict()
  
     dkeys = list(d.keys())
  
     for a in dkeys:
         
+        if len(a) > 2 and not a in KeysList:
+            KeysList.append(a)  
+        
         b  = d.get(a)
         
         if isinstance(b, str)  and "skipped" in b:
-            print("skipped")
+            pass
  
-        
-        
         else:
             if isinstance(b, str) :
                 
@@ -229,9 +223,7 @@ def save_res(Folder , resDict):
  
     # json file to write to
     
- 
-    KeysList.sort(key=len)
-    KeysList.reverse()
+
  
     
     
@@ -243,13 +235,23 @@ def save_res(Folder , resDict):
     
         print(f"Data written to {filename}")
     #
-    
-    
+ 
+       
     resDict = organizeDict(resDict)
     
+    print("organizeDict ok")
+    global KeysList 
+    
+    KeysList = list(set(KeysList))
+ 
+    KeysList.sort(key=len)
+    KeysList.reverse()
+    
+    print(KeysList)
+    print("KeysList sort ok")     
     data = '\n'.join(to_html(resDict))
     
-    
+    print("HTML ok")
     
     titel = Folder.split("\\")[-1] 
     
@@ -346,9 +348,7 @@ def AnalyzeFolder( Folder = None):
         
             resDict = json.load(json_data)
 
-            for ele in resDict.keys():
-                if ele not in KeysList:
-                    KeysList.append(ele) 
+
             
             if returnDict:
  
