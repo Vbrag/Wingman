@@ -18,7 +18,7 @@ from builtins import isinstance
 os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
 
 coder = r"C:\Models\deepseek-coder-1.3b" # Download from https://huggingface.co/deepseek-ai/deepseek-coder-1.3b-instruct/tree/main
-spelling = r"C:\Models\spelling-correction-multilingual-base" # Download https://huggingface.co/oliverguhr/spelling-correction-multilingual-base/tree/main
+spelling = r"C:\Models\spelling-correction-english-base" # Download https://huggingface.co/oliverguhr/spelling-correction-multilingual-base/tree/main
 
 
 tokenizer_coder = AutoTokenizer.from_pretrained(coder , trust_remote_code=True)
@@ -156,10 +156,10 @@ class Wingman:
         # Get the 'generated_text' from the first element of the response
         # This is the corrected text
         self.response = response[0].get('generated_text')  
-    
+        self.send2clipboard()
         # Write the corrected text to the keyboard
         keyboard.write(str(self.response))
- 
+    
 
 
 

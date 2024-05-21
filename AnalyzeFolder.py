@@ -24,7 +24,7 @@ coder = r"C:\Models\deepseek-coder-1.3b" # Download from https://huggingface.co/
 #coder = r"C:\Models\Deepseek-Coder-7B-Instruct" 
 #coder = r"C:\Models\microsoft_phi2" 
 global ToAnalyzeFolder
-ToAnalyzeFolder = r"C:\Users\abdelmaw\Documents\Git\hyperion-ultra\Unity"#  r"C:\Users\abdelmaw\Documents\GitHub\Wingman"#  # r"C:\Users\abdelmaw\Documents\GitHub\Wingman" #r"C:\Users\abdelmaw\Documents\GitHub\ATMOS-Scenery-Generator" #  
+ToAnalyzeFolder = r"C:\Users\abdelmaw\Documents\GitHub\Wingman" # r"C:\Users\abdelmaw\Documents\Git\hyperion-ultra\Unity"#  r"C:\Users\abdelmaw\Documents\GitHub\Wingman"#  # r"C:\Users\abdelmaw\Documents\GitHub\Wingman" #r"C:\Users\abdelmaw\Documents\GitHub\ATMOS-Scenery-Generator" #  
  
 global KeysList 
 KeysList =[] 

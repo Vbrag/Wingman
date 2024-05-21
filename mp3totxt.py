@@ -15,8 +15,14 @@ import os
 
 
 # load model and processor
-processor = WhisperProcessor.from_pretrained(r"C:\Models\whisper-tiny")
-model = WhisperForConditionalGeneration.from_pretrained(r"C:\Models\whisper-tiny")
+
+# processor = WhisperProcessor.from_pretrained(r"C:\Models\whisper-large-v2")
+# model = WhisperForConditionalGeneration.from_pretrained(r"C:\Models\whisper-large-v2")
+# processor = WhisperProcessor.from_pretrained(r"C:\Models\whisper-medium")
+# model = WhisperForConditionalGeneration.from_pretrained(r"C:\Models\whisper-medium")
+
+processor = WhisperProcessor.from_pretrained(r"C:\Models\whisper-small.en")
+model = WhisperForConditionalGeneration.from_pretrained(r"C:\Models\whisper-small.en")
 model.config.forced_decoder_ids = None
     
     
