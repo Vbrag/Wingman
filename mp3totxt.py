@@ -35,22 +35,33 @@ base = r"C:\Users\abdelmaw\Documents\GitHub\downloadYoutube"#os.path.dirname(os.
 
 def MP3ToTxt(mp3, txt):
     
+    try:
+        speech, rate = sf.read(mp3 )
+        #print(rate)
+        
+        print(speech.shape)
+        speech = librosa.resample(speech.T, orig_sr= rate, target_sr=16000)
+        speech = speech[0] + speech[1]
+        #speech = speech[0:int( len(speech)/75 )]
+        step = 400000
+        length = int( len(speech)/step ) +1
     
-    speech, rate = sf.read(mp3 )
-    #print(rate)
     
-    print(speech.shape)
-    speech = librosa.resample(speech.T, orig_sr= rate, target_sr=16000)
-    speech = speech[0] + speech[1]
-    #speech = speech[0:int( len(speech)/75 )]
-    step = 400000
-    
+    except:
+        speech, rate = sf.read(mp3 )
+        #print(rate)
+        
+        print(speech.shape)
+        speech = librosa.resample(speech.T, orig_sr= rate, target_sr=16000)  
+        #speech = speech[0:int( len(speech)/75 )]
+        step = 400000
+        length = int( len(speech)/step ) +1    
     
     lines = []
     
     
     
-    for i in range(0,int( len(speech)/step )):
+    for i in range(0,length ):
         subspeech = speech[i*step:(i+1)*step]
         input_features = processor(subspeech , sampling_rate=16000, return_tensors="pt"  , truncation = False).input_features 
         #print(input_features.shape)
@@ -63,19 +74,14 @@ def MP3ToTxt(mp3, txt):
         print(transcription[0])
         lines.append(transcription[0])
         
-        
-    with open(txt, 'a' ,   encoding="utf-8") as the_file:
+    
+    with open(txt, 'w' ,   encoding="utf-8") as the_file:
         
         for line in lines:
             the_file.write(line + "\n")
+ 
     
-    
-    
-# def mp4_to_mp3(mp4, mp3):     
-#     mp4_without_frames = AudioFileClip(mp4)     
-#     mp4_without_frames.write_audiofile(mp3)     
-#     mp4_without_frames.close() # function call mp4_to_mp3("my_mp4_path.mp4", "audio.mp3")
-
+ 
 if __name__ == '__main__':
     for root, dirs, files in os.walk(base):
         for file in files:
@@ -85,10 +91,10 @@ if __name__ == '__main__':
                 txt = mp3.replace(".mp3", ".txt")
                 
                 print(mp3)
-                if not os.path.isfile(txt)  :              
+                #if not os.path.isfile(txt) and os.stat(mp3).st_size > 0 :              
                     
-                    MP3ToTxt(mp3, txt)
- 
+                MP3ToTxt(mp3, txt)
+                os.remove(mp3)
 
  
  
