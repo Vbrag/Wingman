@@ -21,8 +21,8 @@ import os
 # processor = WhisperProcessor.from_pretrained(r"C:\Models\whisper-medium")
 # model = WhisperForConditionalGeneration.from_pretrained(r"C:\Models\whisper-medium")
 
-processor = WhisperProcessor.from_pretrained(r"C:\Models\whisper-small.en")
-model = WhisperForConditionalGeneration.from_pretrained(r"C:\Models\whisper-small.en")
+processor = WhisperProcessor.from_pretrained(r"C:\Models\whisperLargev3german")
+model = WhisperForConditionalGeneration.from_pretrained(r"C:\Models\whisperLargev3german")
 model.config.forced_decoder_ids = None
     
     
